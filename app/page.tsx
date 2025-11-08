@@ -101,6 +101,8 @@ export default function App() {
   // Camera
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  // File input ref for reliable click trigger (works on mobile & desktop)
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -165,10 +167,11 @@ export default function App() {
                 <Switch checked={mirror} onCheckedChange={setMirror} />
                 <label className="text-sm">Canlı Kamera</label>
                 <Switch checked={useLive} onCheckedChange={setUseLive} />
-                <label htmlFor="photo" className="cursor-pointer">
-                  <Input id="photo" type="file" accept="image/*" onChange={onUploadPhoto} className="hidden" />
-                  <Button variant="outline" className="gap-2"><Upload size={16}/> Fotoğraf Yükle</Button>
-                </label>
+                {/* Native hidden input + programmatic click to avoid label/display:none issues */}
+                <input ref={fileRef} id="photo" type="file" accept="image/*" onChange={onUploadPhoto} className="hidden" />
+                <Button variant="outline" className="gap-2" onClick={() => fileRef.current?.click()}>
+                  <Upload size={16}/> Fotoğraf Yükle
+                </Button>
               </div>
             </div>
 
