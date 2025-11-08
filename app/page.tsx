@@ -39,34 +39,22 @@ function useQuery() {
 function runSelfTests() {
   try {
     // Test 1: Deep link round‑trip encoding/decoding
-    const sample = {
-      img: "https://cdn.example.com/coat.png",
-      name: "Kaban",
-      brand: "Demo",
-      type: "outer",
-    } as const;
-    const qs = new URLSearchParams({
-      img: encodeURI(sample.img),
-      name: sample.name,
-      brand: sample.brand,
-      type: sample.type,
-    });
-    const parsed = new URLSearchParams(qs.toString());
-    console.assert(parsed.get('name') === sample.name, 'Test1:name mismatch');
-    console.assert(parsed.get('brand') === sample.brand, 'Test1:brand mismatch');
-    console.assert(parsed.get('type') === sample.type, 'Test1:type mismatch');
+    const sampleImg = "https://cdn.example.com/coat.png";
+    const qs1 = new URLSearchParams({ img: encodeURIComponent(sampleImg) }).toString();
+    const parsed1 = new URLSearchParams(qs1);
+    const decoded1 = decodeURIComponent(parsed1.get('img') || '');
+    console.assert(decoded1 === sampleImg, 'Test1: decodeURIComponent failed');
 
     // Test 2: Layer update immutability
     const before = [{ id: 'x', x: 0, y: 0, z: 0, scale: 1, opacity: 1, product: {} }];
     const after = before.map(it => it.id === 'x' ? { ...it, x: 10 } : it);
     console.assert(before !== after, 'Test2: array must be new');
-    console.assert(before[0] !== after[0] && after[0].x === 10, 'Test2: object updated immutably');
+    console.assert(before[0] !== after[0] && (after[0] as any).x === 10, 'Test2: object updated immutably');
 
     // Test 3: Mirror transform logic
     const mirror = true; const transform = mirror ? 'scaleX(-1)' : 'none';
     console.assert(transform === 'scaleX(-1)', 'Test3: mirror transform failed');
 
-    // If all passed
     console.debug('[SelfTests] All tests passed');
   } catch (err) {
     console.warn('[SelfTests] Failure', err);
@@ -83,14 +71,25 @@ export default function App() {
 
   // product from deep link
   const linkedProduct = useMemo(() => {
-    const img = q.get('img');
-    if (!img) return null;
+    const raw = q.get('img');
+    if (!raw) return null;
+    let decoded = raw;
+    try {
+      // If img is URL-encoded (deep link), decode it
+      decoded = decodeURIComponent(raw);
+    } catch (_) {
+      // ignore decode errors; use raw
+    }
+    // Basic sanity: allow absolute http(s) or same-origin relative paths like /catalog/...
+    const safe = decoded.startsWith('http://') || decoded.startsWith('https://') || decoded.startsWith('/');
+    if (!safe) return null;
+
     return {
       id: `linked-${Date.now()}`,
       brand: q.get('brand') || 'Linked',
       name: q.get('name') || 'Product',
       type: q.get('type') || 'top',
-      img,
+      img: decoded,
     };
   }, [q]);
 
