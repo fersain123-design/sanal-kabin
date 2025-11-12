@@ -149,7 +149,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 p-4 md:p-8">
+    <>
+      <Background3D />
+      <div className="min-h-screen bg-neutral-50 text-neutral-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Stage */}
         <Card className="lg:col-span-2 shadow-xl rounded-2xl">

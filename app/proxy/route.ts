@@ -7,19 +7,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get("url");
     if (!url) return new NextResponse("Missing url", { status: 400 });
+    if (!/^https?:\/\//i.test(url)) return new NextResponse("Invalid url", { status: 400 });
 
-    if (!/^https?:\/\//i.test(url)) {
-      return new NextResponse("Invalid url", { status: 400 });
-    }
-
-    const upstream = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      // Not: Redirect'leri upstream halleder; CORS sorunlarını kendi domainimizden çözüyoruz.
-    });
-
-    if (!upstream.ok) {
-      return new NextResponse(`Upstream error: ${upstream.status}`, { status: 502 });
-    }
+    const upstream = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!upstream.ok) return new NextResponse(`Upstream error: ${upstream.status}`, { status: 502 });
 
     const contentType = upstream.headers.get("content-type") || "application/octet-stream";
     return new NextResponse(upstream.body, {
