@@ -74,22 +74,17 @@ export default function App() {
     const raw = q.get('img');
     if (!raw) return null;
     let decoded = raw;
-    try {
-      // If img is URL-encoded (deep link), decode it
-      decoded = decodeURIComponent(raw);
-    } catch (_) {
-      // ignore decode errors; use raw
-    }
-    // Basic sanity: allow absolute http(s) or same-origin relative paths like /catalog/...
-    const safe = decoded.startsWith('http://') || decoded.startsWith('https://') || decoded.startsWith('/');
-    if (!safe) return null;
-
+    try { decoded = decodeURIComponent(raw); } catch {}
+    const isExternal = /^https?:\/\//i.test(decoded);
+    const isLocal = decoded.startsWith('/') && !decoded.startsWith('//');
+    const img = isExternal ? `/api/proxy?url=${encodeURIComponent(decoded)}` : (isLocal ? decoded : null);
+    if (!img) return null;
     return {
       id: `linked-${Date.now()}`,
       brand: q.get('brand') || 'Linked',
       name: q.get('name') || 'Product',
       type: q.get('type') || 'top',
-      img: decoded,
+      img,
     };
   }, [q]);
 
